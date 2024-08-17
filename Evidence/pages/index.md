@@ -1,56 +1,111 @@
 ---
-title: Welcome to Evidence
+title: VC Fundraising
 ---
 
-<Details title='How to edit this page'>
-
-  This page can be found in your project at `/pages/index.md`. Make a change to the markdown file and save it to see the change take effect in your browser.
-</Details>
-
-```sql categories
+```sql vc_data
   select
-      category
-  from needful_things.orders
-  group by category
+      ENTITYNAME, sum(TOTALAMOUNTSOLD)
+  from vc_data.vc_data
+  group by ENTITYNAME
+  order by 2 desc
+  limit 1000
+  
 ```
 
-<Dropdown data={categories} name=category value=category>
-    <DropdownOption value="%" valueLabel="All Categories"/>
+
+<Dropdown data={vc_data} name=ENTITYNAME value=ENTITYNAME>
+    <DropdownOption value="%" valueLabel="All Firms"/>
 </Dropdown>
 
-<Dropdown name=year>
-    <DropdownOption value=% valueLabel="All Years"/>
+<Dropdown name=year default=%>
+    <DropdownOption value=% valueLabel="All Years" order={1}/>
     <DropdownOption value=2019/>
     <DropdownOption value=2020/>
     <DropdownOption value=2021/>
+    <DropdownOption value=2022/>
+    <DropdownOption value=2023/>
+    <DropdownOption value=2024/>
 </Dropdown>
 
-```sql orders_by_category
+```sql data_raised_by_firm
   select 
-      date_trunc('month', order_datetime) as month,
-      sum(sales) as sales_usd,
-      category
-  from needful_things.orders
-  where category like '${inputs.category.value}'
-  and date_part('year', order_datetime) like '${inputs.year.value}'
+      date_trunc('month', normalized_date::DATE) as month,
+      ENTITYNAME,
+      sum(TOTALAMOUNTSOLD) as total_raised,
+  from vc_data.vc_data
+  where ENTITYNAME like '${inputs.ENTITYNAME.value}'
+  and date_part('year', normalized_date::DATE) like '${inputs.year.value}' 
+  and INVESTMENTFUNDTYPE = 'Venture Capital Fund'
   group by all
-  order by sales_usd desc
+  order by total_raised desc
+  limit 10000
 ```
 
 <BarChart
-    data={orders_by_category}
-    title="Sales by Month, {inputs.category.label}"
+    data={data_raised_by_firm}
+    title="Raised by year, {inputs.year.label}"
     x=month
-    y=sales_usd
-    series=category
+    y=total_raised
+    yFmt=usd2b
 />
 
-## What's Next?
-- [Connect your data sources](settings)
-- Edit/add markdown files in the `pages` folder
-- Deploy your project with [Evidence Cloud](https://evidence.dev/cloud)
+```sql heatmap
+  select 
+      normalized_date::DATE as date,
+      sum(TOTALAMOUNTSOLD) as total_raised,
+  from vc_data.vc_data
+  where ENTITYNAME like '${inputs.ENTITYNAME.value}'
+  and date_part('year', normalized_date::DATE) like '${inputs.year.value}' 
+  and INVESTMENTFUNDTYPE = 'Venture Capital Fund'
+  group by all
+```
 
-## Get Support
-- Message us on [Slack](https://slack.evidence.dev/)
-- Read the [Docs](https://docs.evidence.dev/)
-- Open an issue on [Github](https://github.com/evidence-dev/evidence)
+<CalendarHeatmap
+    data={heatmap}
+    date=date
+    value=total_raised
+    valueFmt=usd 
+    connectGroup=group1
+/>
+
+```sql datatable
+  select 
+      normalized_date::DATE as date,
+      ENTITYNAME,
+      fund_name,
+      sum(TOTALAMOUNTSOLD) as total_raised,
+  from vc_data.vc_data
+  where ENTITYNAME like '${inputs.ENTITYNAME.value}'
+  and date_part('year', normalized_date::DATE) like '${inputs.year.value}' 
+  and INVESTMENTFUNDTYPE = 'Venture Capital Fund'
+  group by all
+  order by total_raised desc
+```
+
+<DataTable data={datatable}>
+  <Column id=date  />
+  <Column id=ENTITYNAME  />
+  <Column id=fund_name  />
+  <Column id=total_raised  fmt=usd1m/>
+</DataTable>`
+
+
+```sql chart_query
+  select 
+      ENTITYNAME,
+      sum(TOTALAMOUNTSOLD) as total_raised,
+  from vc_data.vc_data
+  where ENTITYNAME like '${inputs.ENTITYNAME.value}'
+  and INVESTMENTFUNDTYPE = 'Venture Capital Fund'
+  group by all
+  order by total_raised desc
+  limit 100
+```
+
+<BarChart
+    data={chart_query}
+    title="All Time Raised"
+    x=ENTITYNAME
+    y=total_raised
+    swapXY=true
+/>

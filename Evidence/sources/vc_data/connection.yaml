@@ -1,0 +1,5 @@
+# This file was automatically generated
+name: vc_data
+type: duckdb
+options:
+  filename: vc_database.duckdb
