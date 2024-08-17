@@ -72,7 +72,6 @@ title: VC Fundraising
   select 
       normalized_date::DATE as date,
       ENTITYNAME,
-      fund_name,
       sum(TOTALAMOUNTSOLD) as total_raised,
   from vc_data.vc_data
   where ENTITYNAME like '${inputs.ENTITYNAME.value}'
@@ -85,7 +84,6 @@ title: VC Fundraising
 <DataTable data={datatable}>
   <Column id=date  />
   <Column id=ENTITYNAME  />
-  <Column id=fund_name  />
   <Column id=total_raised  fmt=usd1m/>
 </DataTable>`
 
